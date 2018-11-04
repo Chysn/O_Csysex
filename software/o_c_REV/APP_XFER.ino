@@ -31,67 +31,67 @@
 
 class XFER: public SystemExclusiveHandler {
 public:
-	void Init() {
-		Resume();
-	}
-	
-	void Resume() {
-		receiving = 0;
-		packet = 0;
-	}
+    void Init() {
+        Resume();
+    }
+    
+    void Resume() {
+        receiving = 0;
+        packet = 0;
+    }
 
     void Controller() {
-    		if (receiving) ListenForSysEx();
+        if (receiving) ListenForSysEx();
     }
     
     void View() {
-    		DrawInterface();
+        DrawInterface();
     }
     
     void ToggleReceiveMode() {
-    		receiving = 1 - receiving;
-    		packet = 0;
+		receiving = 1 - receiving;
+		packet = 0;
     }
     
     void OnSendSysEx() {
-    		if (!receiving) {
-    			packet = 0;
-            uint8_t V[33];
-    			
-    			uint16_t address = EEPROM_CALIBRATIONDATA_END;
-    			for (byte p = 0; p < XFER_NUMBER_OF_PACKETS; p++)
-    			{
-    				packet = p;
-    				uint8_t ix = 0;
-    				V[ix++] = packet; // Packet number
-    				
-    				// Wrap into 32-byte packets
-    				for (byte b = 0; b < 32; b++) V[ix++] = EEPROM.read(address++);
-    				
-    				UnpackedData unpacked;
-    				unpacked.set_data(ix, V);
-    				PackedData packed = unpacked.pack();
-    				SendSysEx(packed, OC_SYSEX_SPECIFIER); // _ indicates O_C
-    			}
-    		}
+		if (!receiving) {
+			packet = 0;
+		uint8_t V[33];
+			
+			uint16_t address = EEPROM_CALIBRATIONDATA_END;
+			for (byte p = 0; p < XFER_NUMBER_OF_PACKETS; p++)
+			{
+				packet = p;
+				uint8_t ix = 0;
+				V[ix++] = packet; // Packet number
+				
+				// Wrap into 32-byte packets
+				for (byte b = 0; b < 32; b++) V[ix++] = EEPROM.read(address++);
+				
+				UnpackedData unpacked;
+				unpacked.set_data(ix, V);
+				PackedData packed = unpacked.pack();
+				SendSysEx(packed, OC_SYSEX_SPECIFIER); // _ indicates O_C
+			}
+		}
     }
     
     void OnReceiveSysEx() {
-    		uint8_t V[33];
-    		if (ExtractSysExData(V, OC_SYSEX_SPECIFIER)) {
-    			uint8_t ix = 0;
-    			uint8_t p = V[ix++]; // Get packet number
-    			packet = p;
-    			uint16_t address = (p * 32) + EEPROM_CALIBRATIONDATA_END;
-    			for (byte b = 0; b < 32; b++)
-    			{
-    				EEPROM.write(address++, V[ix++]);
-    			}
-    			if (p == XFER_NUMBER_OF_PACKETS - 1) {
-    				receiving = 0;
-    				OC::apps::Init(0);
-    			}
-    		}
+		uint8_t V[33];
+		if (ExtractSysExData(V, OC_SYSEX_SPECIFIER)) {
+			uint8_t ix = 0;
+			uint8_t p = V[ix++]; // Get packet number
+			packet = p;
+			uint16_t address = (p * 32) + EEPROM_CALIBRATIONDATA_END;
+			for (byte b = 0; b < 32; b++)
+			{
+				EEPROM.write(address++, V[ix++]);
+			}
+			if (p == XFER_NUMBER_OF_PACKETS - 1) {
+				receiving = 0;
+				OC::apps::Init(0);
+			}
+		}
     }
         
 private:
@@ -105,24 +105,24 @@ private:
         
         graphics.setPrintPos(0, 15);
         if (receiving) {
-        		if (packet > 0) {
-        			graphics.print("Receiving...");
+			if (packet > 0) {
+				graphics.print("Receiving...");
 
-        			// Progress bar
-        			graphics.drawRect(0, 33, (packet + 4) * 2, 8);
-        		}
-        		else graphics.print("Listening...");
+				// Progress bar
+				graphics.drawRect(0, 33, (packet + 4) * 2, 8);
+			}
+			else graphics.print("Listening...");
         } else {
-        		if (packet > 0) graphics.print("Done!");
-        		else graphics.print("Receive or Send?");
+			if (packet > 0) graphics.print("Done!");
+			else graphics.print("Receive or Send?");
         }
         
-		graphics.setPrintPos(0, 55);
+        graphics.setPrintPos(0, 55);
         if (receiving) graphics.print("[CANCEL]");
         else {
-        		graphics.print("[RECEIVE]");
-        		graphics.setPrintPos(90, 55);
-        		graphics.print("[SEND]");
+			graphics.print("[RECEIVE]");
+			graphics.setPrintPos(90, 55);
+			graphics.print("[SEND]");
         }
     }
     
@@ -147,8 +147,8 @@ void XFER_screensaver() {XFER_instance.View();}
 void XFER_handleEncoderEvent(const UI::Event &event) {}
 
 void XFER_handleButtonEvent(const UI::Event &event) {
-	if (event.type == UI::EVENT_BUTTON_PRESS) {
-	    if (event.control == OC::CONTROL_BUTTON_L) XFER_instance.ToggleReceiveMode();
-	    if (event.control == OC::CONTROL_BUTTON_R) XFER_instance.OnSendSysEx();
-	}
+    if (event.type == UI::EVENT_BUTTON_PRESS) {
+        if (event.control == OC::CONTROL_BUTTON_L) XFER_instance.ToggleReceiveMode();
+        if (event.control == OC::CONTROL_BUTTON_R) XFER_instance.OnSendSysEx();
+    }
 }
